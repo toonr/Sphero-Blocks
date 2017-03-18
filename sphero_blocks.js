@@ -1,19 +1,21 @@
 (function(ext) {
+    var device = null;
+
     // Cleanup function when the extension is unloaded
     ext._shutdown = function() {};
 
     // Status reporting code
     // Use this to report missing hardware, plugin or unsupported browser
     ext._getStatus = function() {
-        return {status: 2, msg: 'Ready'};
-    };
+        if(!device) return {status: 1, msg: 'Device not connected'};
+        return {status: 2, msg: 'Device connected'};
+    }
 
     ext._deviceConnected = function(dev) {
         if(device) return;
         console.log("_deviceConnected");
         device = dev;
         device.open(deviceOpened);
-        status = true;
     };
 
     ext.my_first_block = function() {
@@ -25,7 +27,7 @@
         blocks: [
             [' ', 'my first block', 'my_first_block']
         ],
-        url: 'https://github.com/toonr/Sphero-Blocks'
+        url: 'https://toonr.github.io/Sphero-Blocks/sphero_blocks.js'
     };
 
     var serial_info = {type: 'serial'};
