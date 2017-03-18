@@ -11,6 +11,17 @@
         return {status: 2, msg: 'Device connected'};
     }
 
+var poller = null;
+function deviceOpened(dev) {
+    // if device fails to open, forget about it
+    if (dev == null) device = null;
+
+    // otherwise start polling
+    poller = setInterval(function() {
+        rawData = device.read();
+    }, 20);
+};
+
     ext._deviceConnected = function(dev) {
         if(device) return;
         console.log("_deviceConnected");
