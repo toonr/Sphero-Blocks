@@ -28,6 +28,7 @@
         url: 'https://github.com/toonr/Sphero-Blocks'
     };
 
+    var serial_info = {type: 'serial'};
     // Register the extension
-    ScratchExtensions.register('Sample extension', descriptor, ext);
+    ScratchExtensions.register('Sample extension', descriptor, ext, serial_info);
 })({});
