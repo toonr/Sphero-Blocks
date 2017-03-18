@@ -25,6 +25,7 @@ function deviceOpened(dev) {
     ext._deviceConnected = function(dev) {
         if(device) return;
         console.log("_deviceConnected");
+        console.log(dev);
         device = dev;
         device.open(deviceOpened);
     };
