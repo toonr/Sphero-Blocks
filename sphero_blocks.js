@@ -1,5 +1,6 @@
 (function(ext) {
     var device = null;
+    var connected = false;
 
     // Cleanup function when the extension is unloaded
     ext._shutdown = function() {};
@@ -7,13 +8,15 @@
     // Status reporting code
     // Use this to report missing hardware, plugin or unsupported browser
     ext._getStatus = function() {
-        if(!device) return {status: 1, msg: 'Device not connected'};
+        if(!connected) return {status: 1, msg: 'Device not connected'};
         return {status: 2, msg: 'Device connected'};
     }
 
     var potentialDevices = [];
     ext._deviceConnected = function(dev) {
-        potentialDevices.push(dev);
+        if (dev.id == "COM8") {
+            potentialDevices.push(dev);
+        }
 
         if (!device) {
             tryNextDevice();
