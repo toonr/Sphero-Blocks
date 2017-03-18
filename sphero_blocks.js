@@ -11,24 +11,25 @@
         return {status: 2, msg: 'Device connected'};
     }
 
-var poller = null;
-function deviceOpened(dev) {
-    // if device fails to open, forget about it
-    if (dev == null) device = null;
-
-    // otherwise start polling
-    poller = setInterval(function() {
-        rawData = device.read();
-    }, 20);
-};
-
+    var potentialDevices = [];
     ext._deviceConnected = function(dev) {
-        if(device) return;
-        console.log("_deviceConnected");
-        console.log(dev);
-        device = dev;
-        device.open(deviceOpened);
+        potentialDevices.push(dev);
+
+        if (!device) {
+            tryNextDevice();
+        };
     };
+
+    function tryNextDevice() {
+        // If potentialDevices is empty, device will be undefined.
+        // That will get us back here next time a device is connected.
+        device = potentialDevices.shift();
+        if (!device) return;
+
+        device.open({ stopBits: 0, bitRate: 38400, ctsFlowControl: 0 });
+        device.set_receive_handler(function(data) {
+            console.log(data);
+        });
 
     ext.my_first_block = function() {
         console.log("test");
