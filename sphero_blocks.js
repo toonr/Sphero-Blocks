@@ -30,6 +30,7 @@
         device.set_receive_handler(function(data) {
             console.log(data);
         });
+    };
 
     ext.my_first_block = function() {
         console.log("test");
