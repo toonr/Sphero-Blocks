@@ -1,6 +1,6 @@
 ## Welcome to Sphero-Blocks
 
-This is a ScratchX application with custom blocks for the [Sphero robot](http://www.sphero.com/).
+This is a [ScratchX application](http://scratchx.org/) with custom blocks for the [Sphero robot](http://www.sphero.com/).
 
 ## Running the project
 
