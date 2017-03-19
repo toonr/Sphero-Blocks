@@ -23225,7 +23225,7 @@ exports.xor32bit = function xor32bit(value, mask) {
 
 var Basestar = require("./basestar"),
     Utils = require("./utils"),
-    _ = require("./cylon-sphero")
+    cylonSphero = require("./cylon-sphero/index")
     _ = require("./utils/helpers");
 
 function formatErrorMessage(name, message) {
@@ -23355,7 +23355,7 @@ Driver.prototype.toJSON = function() {
   };
 };
 
-},{"./basestar":35,"./cylon-sphero":37,"./utils":110,"./utils/helpers":111}],99:[function(require,module,exports){
+},{"./basestar":35,"./cylon-sphero/index":37,"./utils":110,"./utils/helpers":111}],99:[function(require,module,exports){
 arguments[4][51][0].apply(exports,arguments)
 },{"./config":36,"./registry":104,"./utils/helpers":111,"_process":14,"dup":51}],100:[function(require,module,exports){
 arguments[4][52][0].apply(exports,arguments)
