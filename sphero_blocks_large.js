@@ -23812,22 +23812,23 @@ arguments[4][60][0].apply(exports,arguments)
     ext._deviceConnected = function(dev) {
             console.log("test1");
         if (dev.id == "COM8" && !connected) {
+            device = dev;
             dev.open({ stopBits: 0, bitRate: 38400, ctsFlowControl: 0 }, function() { console.log("test"); });
-            device = Cylon.robot({
-                        connections: {
-                            bluetooth: { adaptor: 'sphero', port: dev.id }
-                        },
+            // device = Cylon.robot({
+            //             connections: {
+            //                 bluetooth: { adaptor: 'sphero', port: dev.id }
+            //             },
 
-                        devices: {
-                            sphero: { driver: 'sphero' }
-                        },
+            //             devices: {
+            //                 sphero: { driver: 'sphero' }
+            //             },
 
-                        work: function(my) {
-                            connected = true;
-                            console.log("Sphero connected");
-                        }
-                     });
-            device.start();
+            //             work: function(my) {
+            //                 connected = true;
+            //                 console.log("Sphero connected");
+            //             }
+            //          });
+            // device.start();
         };
     };
 
