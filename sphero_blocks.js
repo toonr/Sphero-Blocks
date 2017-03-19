@@ -1,6 +1,7 @@
 (function(ext) {
     var device = null;
     var connected = false;
+    var Cylon = require('cylon');
 
     // Cleanup function when the extension is unloaded
     ext._shutdown = function() {};
@@ -14,26 +15,22 @@
 
     var potentialDevices = [];
     ext._deviceConnected = function(dev) {
-        if (dev.id == "COM8") {
-            potentialDevices.push(dev);
-        }
+        if (dev.id == "COM8" && !connected) {
+            device = Cylon.robot({
+                        connections: {
+                            bluetooth: { adaptor: 'sphero', port: 'COM8' }
+                        },
 
-        if (!device) {
-            tryNextDevice();
+                        devices: {
+                            sphero: { driver: 'sphero' }
+                        }
+
+                        work: function(my) {
+                            connected = true;
+                            console.log("Sphero connected");
+                        }
+                     });
         };
-    };
-
-    function tryNextDevice() {
-        // If potentialDevices is empty, device will be undefined.
-        // That will get us back here next time a device is connected.
-        device = potentialDevices.shift();
-        console.log(device);
-        if (!device) return;
-
-        device.open({ stopBits: 0, bitRate: 38400, ctsFlowControl: 0 });
-        device.set_receive_handler(function(data) {
-            console.log(data);
-        });
     };
 
     ext.my_first_block = function() {
