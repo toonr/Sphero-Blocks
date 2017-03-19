@@ -23,7 +23,7 @@
 
                         devices: {
                             sphero: { driver: 'sphero' }
-                        }
+                        },
 
                         work: function(my) {
                             connected = true;
