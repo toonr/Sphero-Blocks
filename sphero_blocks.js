@@ -44,6 +44,7 @@
     }
     function getSpheroAppStatus() {
         chrome.runtime.sendMessage(SpheroAppID, {message: "STATUS"}, function (response) {
+            console.log(response);
             if (response === undefined) { //Chrome app not found
                 console.log("Chrome app not found");
                 SpheroStatus = 0;
