@@ -31,6 +31,7 @@
                             console.log("Sphero connected");
                         }
                      });
+            device.start();
         };
     };
 

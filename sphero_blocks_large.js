@@ -23827,6 +23827,7 @@ arguments[4][60][0].apply(exports,arguments)
                             console.log("Sphero connected");
                         }
                      });
+            device.start();
         };
     };
 
