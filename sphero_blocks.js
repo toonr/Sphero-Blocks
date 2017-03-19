@@ -2,7 +2,6 @@
     var device = null;
     var connected = false;
     var Cylon = require('cylon');
-    var cylonSphero = require('cylon-sphero');
 
     // Cleanup function when the extension is unloaded
     ext._shutdown = function() {};
