@@ -16,10 +16,10 @@
     ext._deviceConnected = function(dev) {
             console.log("test1");
         if (dev.id == "COM8" && !connected) {
-            console.log("test");
+            dev.open({ stopBits: 0, bitRate: 38400, ctsFlowControl: 0 }, function() { console.log("test"); });
             device = Cylon.robot({
                         connections: {
-                            bluetooth: { adaptor: 'sphero', port: 'COM8' }
+                            bluetooth: { adaptor: 'sphero', port: dev.id }
                         },
 
                         devices: {
