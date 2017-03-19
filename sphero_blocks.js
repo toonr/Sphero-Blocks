@@ -4,7 +4,6 @@
     var SpheroConnection;
     var SpheroStatus = 0;
     var SpheroAppID = getRequest().id?getRequest().id:"falgapmgoopapgbocigmjlclilgjgijb"; //unique app ID for Sphero Scratch App
-    //var Cylon = require('cylon');
 
     ext.my_first_block = function() {
         console.log("test");
@@ -44,7 +43,6 @@
     }
     function getSpheroAppStatus() {
         chrome.runtime.sendMessage(SpheroAppID, {message: "STATUS"}, function (response) {
-            console.log(response);
             if (response === undefined) { //Chrome app not found
                 console.log("Chrome app not found");
                 SpheroStatus = 0;
@@ -58,6 +56,7 @@
                 if (SpheroStatus !==2) {
                     console.log("Connected");
                     SpheroConnection = chrome.runtime.connect(SpheroAppID);
+                    console.log(SpheroConnection);
                     SpheroConnection.onMessage.addListener(onMsgApp);
                 }
                 SpheroStatus = 2;
