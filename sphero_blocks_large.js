@@ -5858,6 +5858,372 @@ function hasOwnProperty(obj, prop) {
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./support/isBuffer":30,"_process":14,"inherits":29}],32:[function(require,module,exports){
+(function (process){
+"use strict";
+
+var MCP = require("./lib/mcp");
+
+module.exports = {
+  MCP: require("./lib/mcp"),
+
+  Robot: require("./lib/robot"),
+
+  Driver: require("./lib/driver"),
+  Adaptor: require("./lib/adaptor"),
+
+  Utils: require("./lib/utils"),
+  Logger: require("./lib/logger"),
+
+  IO: {
+    DigitalPin: require("./lib/io/digital-pin"),
+    Utils: require("./lib/io/utils")
+  },
+
+  robot: MCP.create,
+  api: require("./lib/api").create,
+  config: require("./lib/config").update,
+
+  start: MCP.start,
+  halt: MCP.halt
+};
+
+process.on("SIGINT", function() {
+  MCP.halt(process.kill.bind(process, process.pid));
+});
+
+if (process.platform === "win32") {
+  var io = { input: process.stdin, output: process.stdout },
+      quit = process.emit.bind(process, "SIGINT");
+
+  require("readline").createInterface(io).on("SIGINT", quit);
+}
+
+}).call(this,require('_process'))
+},{"./lib/adaptor":33,"./lib/api":34,"./lib/config":36,"./lib/driver":98,"./lib/io/digital-pin":100,"./lib/io/utils":101,"./lib/logger":102,"./lib/mcp":103,"./lib/robot":105,"./lib/utils":110,"_process":14,"readline":1}],33:[function(require,module,exports){
+"use strict";
+
+var Basestar = require("./basestar"),
+    Utils = require("./utils"),
+    _ = require("./utils/helpers");
+
+function formatErrorMessage(name, message) {
+  return ["Error in connection", "'" + name + "'", "- " + message].join(" ");
+}
+
+/**
+ * Adaptor class
+ *
+ * @constructor Adaptor
+ *
+ * @param {Object} [opts] adaptor options
+ * @param {String} [opts.name] the adaptor's name
+ * @param {Object} [opts.robot] the robot the adaptor belongs to
+ * @param {Object} [opts.host] the host the adaptor will connect to
+ * @param {Object} [opts.port] the port the adaptor will connect to
+ */
+var Adaptor = module.exports = function Adaptor(opts) {
+  Adaptor.__super__.constructor.apply(this, arguments);
+
+  opts = opts || {};
+
+  this.name = opts.name;
+
+  // the Robot the adaptor belongs to
+  this.robot = opts.robot;
+
+  // some default options
+  this.host = opts.host;
+  this.port = opts.port;
+
+  // misc. details provided in args hash
+  this.details = {};
+
+  _.each(opts, function(opt, name) {
+    if (!_.includes(["robot", "name", "adaptor", "events"], name)) {
+      this.details[name] = opt;
+    }
+  }, this);
+};
+
+Utils.subclass(Adaptor, Basestar);
+
+/**
+ * A base connect function. Must be overwritten by a descendent.
+ *
+ * @throws Error if not overridden by a child class
+ * @return {void}
+ */
+Adaptor.prototype.connect = function() {
+  var message = formatErrorMessage(
+    this.name,
+    "Adaptor#connect method must be overwritten by descendant classes."
+  );
+
+  throw new Error(message);
+};
+
+/**
+ * A base disconnect function. Must be overwritten by a descendent.
+ *
+ * @throws Error if not overridden by a child class
+ * @return {void}
+ */
+Adaptor.prototype.disconnect = function() {
+  var message = formatErrorMessage(
+    this.name,
+    "Adaptor#disconnect method must be overwritten by descendant classes."
+  );
+
+  throw new Error(message);
+};
+
+/**
+ * Expresses the Adaptor in a JSON-serializable format
+ *
+ * @return {Object} a representation of the Adaptor in a serializable format
+ */
+Adaptor.prototype.toJSON = function() {
+  return {
+    name: this.name,
+    adaptor: this.constructor.name || this.name,
+    details: this.details
+  };
+};
+
+},{"./basestar":35,"./utils":110,"./utils/helpers":111}],34:[function(require,module,exports){
+"use strict";
+
+var MCP = require("./mcp"),
+    Logger = require("./logger"),
+    _ = require("./utils/helpers");
+
+var api = module.exports = {};
+
+api.instances = [];
+
+/**
+ * Creates a new API instance
+ *
+ * @param {String} [Server] which API plugin to use (e.g. "http" loads
+ * cylon-api-http)
+ * @param {Object} opts options for the new API instance
+ * @return {void}
+ */
+api.create = function create(Server, opts) {
+  // if only passed options (or nothing), assume HTTP server
+  if (Server == null || _.isObject(Server) && !_.isFunction(Server)) {
+    opts = Server;
+    Server = "http";
+  }
+
+  opts = opts || {};
+
+  if (_.isString(Server)) {
+    var req = "cylon-api-" + Server;
+
+    try {
+      Server = require(req);
+    } catch (e) {
+      if (e.code !== "MODULE_NOT_FOUND") {
+        throw e;
+      }
+
+      [
+        "Cannot find the " + req + " API module.",
+        "You may be able to install it: `npm install " + req + "`"
+      ].forEach(Logger.log);
+
+      throw new Error("Missing API plugin - cannot proceed");
+    }
+  }
+
+  opts.mcp = MCP;
+
+  var instance = new Server(opts);
+  api.instances.push(instance);
+  instance.start();
+};
+
+},{"./logger":102,"./mcp":103,"./utils/helpers":111}],35:[function(require,module,exports){
+"use strict";
+
+var EventEmitter = require("events").EventEmitter;
+
+var Utils = require("./utils"),
+    _ = require("./utils/helpers");
+
+/**
+ * The Basestar class is a wrapper class around EventEmitter that underpins most
+ * other Cylon adaptor/driver classes, providing useful external base methods
+ * and functionality.
+ *
+ * @constructor Basestar
+ */
+var Basestar = module.exports = function Basestar() {
+  Utils.classCallCheck(this, Basestar);
+};
+
+Utils.subclass(Basestar, EventEmitter);
+
+/**
+ * Proxies calls from all methods in the source to a target object
+ *
+ * @param {String[]} methods methods to proxy
+ * @param {Object} target object to proxy methods to
+ * @param {Object} source object to proxy methods from
+ * @param {Boolean} [force=false] whether or not to overwrite existing methods
+ * @return {Object} the source
+ */
+Basestar.prototype.proxyMethods = Utils.proxyFunctionsToObject;
+
+/**
+ * Triggers the provided callback, and emits an event with the provided data.
+ *
+ * If an error is provided, emits the 'error' event.
+ *
+ * @param {String} event what event to emit
+ * @param {Function} callback function to be invoked with error/data
+ * @param {*} err possible error value
+ * @param {...*} data data values to be passed to error/callback
+ * @return {void}
+ */
+Basestar.prototype.respond = function(event, callback, err) {
+  var args = Array.prototype.slice.call(arguments, 3);
+
+  if (err) {
+    this.emit("error", err);
+  } else {
+    this.emit.apply(this, [event].concat(args));
+  }
+
+  if (typeof callback === "function") {
+    callback.apply(this, [err].concat(args));
+  }
+};
+
+/**
+ * Defines an event handler to proxy events from a source object to a target
+ *
+ * @param {Object} opts event options
+ * @param {EventEmitter} opts.source source of events to listen for
+ * @param {EventEmitter} opts.target target new events should be emitted from
+ * @param {String} opts.eventName name of event to listen for, and proxy
+ * @param {Bool} [opts.sendUpdate=false] whether to emit the 'update' event
+ * @param {String} [opts.targetEventName] new event name to emit from target
+ * @return {EventEmitter} the source object
+ */
+Basestar.prototype.defineEvent = function(opts) {
+  opts.sendUpdate = opts.sendUpdate || false;
+  opts.targetEventName = opts.targetEventName || opts.eventName;
+
+  opts.source.on(opts.eventName, function() {
+    var args = arguments.length >= 1 ? [].slice.call(arguments, 0) : [];
+    args.unshift(opts.targetEventName);
+    opts.target.emit.apply(opts.target, args);
+
+    if (opts.sendUpdate) {
+      args.unshift("update");
+      opts.target.emit.apply(opts.target, args);
+    }
+  });
+
+  return opts.source;
+};
+
+/**
+ * A #defineEvent shorthand for adaptors.
+ *
+ * Proxies events from an adaptor's connector to the adaptor itself.
+ *
+ * @param {Object} opts proxy options
+ * @return {EventEmitter} the adaptor's connector
+ */
+Basestar.prototype.defineAdaptorEvent = function(opts) {
+  return this._proxyEvents(opts, this.connector, this);
+};
+
+/**
+ * A #defineEvent shorthand for drivers.
+ *
+ * Proxies events from an driver's connection to the driver itself.
+ *
+ * @param {Object} opts proxy options
+ * @return {EventEmitter} the driver's connection
+ */
+Basestar.prototype.defineDriverEvent = function(opts) {
+  return this._proxyEvents(opts, this.connection, this);
+};
+
+Basestar.prototype._proxyEvents = function(opts, source, target) {
+  opts = _.isString(opts) ? { eventName: opts } : opts;
+
+  opts.source = source;
+  opts.target = target;
+
+  return this.defineEvent(opts);
+};
+
+},{"./utils":110,"./utils/helpers":111,"events":7}],36:[function(require,module,exports){
+"use strict";
+
+var _ = require("./utils/helpers");
+
+var config = module.exports = {},
+    callbacks = [];
+
+// default data
+config.haltTimeout = 3000;
+config.testMode = false;
+config.logger = null;
+config.silent = false;
+config.debug = false;
+
+/**
+ * Updates the Config, and triggers handler callbacks
+ *
+ * @param {Object} data new configuration information to set
+ * @return {Object} the updated configuration
+ */
+config.update = function update(data) {
+  var forbidden = ["update", "subscribe", "unsubscribe"];
+
+  Object.keys(data).forEach(function(key) {
+    if (~forbidden.indexOf(key)) { delete data[key]; }
+  });
+
+  if (!Object.keys(data).length) {
+    return config;
+  }
+
+  _.extend(config, data);
+
+  callbacks.forEach(function(callback) { callback(data); });
+
+  return config;
+};
+
+/**
+ * Subscribes a function to be called whenever the config is updated
+ *
+ * @param {Function} callback function to be called with updated data
+ * @return {void}
+ */
+config.subscribe = function subscribe(callback) {
+  callbacks.push(callback);
+};
+
+/**
+ * Unsubscribes a callback from configuration changes
+ *
+ * @param {Function} callback function to unsubscribe from changes
+ * @return {void}
+ */
+config.unsubscribe = function unsubscribe(callback) {
+  var idx = callbacks.indexOf(callback);
+  if (idx >= 0) { callbacks.splice(idx, 1); }
+};
+
+},{"./utils/helpers":111}],37:[function(require,module,exports){
 "use strict";
 
 var Adaptor = require("./lib/adaptor"),
@@ -5876,7 +6242,7 @@ module.exports = {
   }
 };
 
-},{"./lib/adaptor":33,"./lib/driver":35}],33:[function(require,module,exports){
+},{"./lib/adaptor":38,"./lib/driver":40}],38:[function(require,module,exports){
 /*
  * cylon sphero adaptor
  * http://cylonjs.com
@@ -5995,7 +6361,7 @@ Adaptor.prototype.setDataStreaming = function(opts, callback) {
   this.sphero.setDataStreaming(opts, callback);
 };
 
-},{"./commands":34,"./events":36,"cylon":40,"sphero":79}],34:[function(require,module,exports){
+},{"./commands":39,"./events":41,"cylon":45,"sphero":84}],39:[function(require,module,exports){
 /*
  * cylon sphero commands
  * http://cylonjs.com
@@ -7804,7 +8170,7 @@ module.exports = [
   "version"
   ];
 
-},{}],35:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 /*
   * cylon sphero driver
   * http://cylonjs.com
@@ -7859,7 +8225,7 @@ Driver.prototype.halt = function(callback) {
   });
 };
 
-},{"./commands":34,"./events":36,"cylon":40}],36:[function(require,module,exports){
+},{"./commands":39,"./events":41,"cylon":45}],41:[function(require,module,exports){
 /*
  * cylon sphero commands
  * http://cylonjs.com
@@ -8080,7 +8446,7 @@ module.exports = [
   "gyroAxisExceeded"
 ];
 
-},{}],37:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 (function (process,__filename){
 
 /**
@@ -8249,8 +8615,8 @@ exports.getRoot = function getRoot (file) {
   }
 }
 
-}).call(this,require('_process'),"/..\\..\\..\\..\\..\\AppData\\Roaming\\npm\\node_modules\\cylon-sphero\\node_modules\\bindings\\bindings.js")
-},{"_process":14,"fs":1,"path":12}],38:[function(require,module,exports){
+}).call(this,require('_process'),"/..\\..\\..\\..\\..\\AppData\\Roaming\\npm\\node_modules\\cylon\\lib\\cylon-sphero\\node_modules\\bindings\\bindings.js")
+},{"_process":14,"fs":1,"path":12}],43:[function(require,module,exports){
 (function (process,global){
 /* @preserve
  * The MIT License (MIT)
@@ -13872,7 +14238,7 @@ module.exports = ret;
 },{"./es5":13}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":14}],39:[function(require,module,exports){
+},{"_process":14}],44:[function(require,module,exports){
 (function (process,Buffer){
 'use strict';
 
@@ -14295,373 +14661,17 @@ module.exports = {
 };
 
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"_process":14,"buffer":5,"events":7,"util":31}],40:[function(require,module,exports){
-(function (process){
-"use strict";
-
-var MCP = require("./lib/mcp");
-
-module.exports = {
-  MCP: require("./lib/mcp"),
-
-  Robot: require("./lib/robot"),
-
-  Driver: require("./lib/driver"),
-  Adaptor: require("./lib/adaptor"),
-
-  Utils: require("./lib/utils"),
-  Logger: require("./lib/logger"),
-
-  IO: {
-    DigitalPin: require("./lib/io/digital-pin"),
-    Utils: require("./lib/io/utils")
-  },
-
-  robot: MCP.create,
-  api: require("./lib/api").create,
-  config: require("./lib/config").update,
-
-  start: MCP.start,
-  halt: MCP.halt
-};
-
-process.on("SIGINT", function() {
-  MCP.halt(process.kill.bind(process, process.pid));
-});
-
-if (process.platform === "win32") {
-  var io = { input: process.stdin, output: process.stdout },
-      quit = process.emit.bind(process, "SIGINT");
-
-  require("readline").createInterface(io).on("SIGINT", quit);
-}
-
-}).call(this,require('_process'))
-},{"./lib/adaptor":41,"./lib/api":42,"./lib/config":44,"./lib/driver":45,"./lib/io/digital-pin":47,"./lib/io/utils":48,"./lib/logger":49,"./lib/mcp":50,"./lib/robot":52,"./lib/utils":57,"_process":14,"readline":1}],41:[function(require,module,exports){
-"use strict";
-
-var Basestar = require("./basestar"),
-    Utils = require("./utils"),
-    _ = require("./utils/helpers");
-
-function formatErrorMessage(name, message) {
-  return ["Error in connection", "'" + name + "'", "- " + message].join(" ");
-}
-
-/**
- * Adaptor class
- *
- * @constructor Adaptor
- *
- * @param {Object} [opts] adaptor options
- * @param {String} [opts.name] the adaptor's name
- * @param {Object} [opts.robot] the robot the adaptor belongs to
- * @param {Object} [opts.host] the host the adaptor will connect to
- * @param {Object} [opts.port] the port the adaptor will connect to
- */
-var Adaptor = module.exports = function Adaptor(opts) {
-  Adaptor.__super__.constructor.apply(this, arguments);
-
-  opts = opts || {};
-
-  this.name = opts.name;
-
-  // the Robot the adaptor belongs to
-  this.robot = opts.robot;
-
-  // some default options
-  this.host = opts.host;
-  this.port = opts.port;
-
-  // misc. details provided in args hash
-  this.details = {};
-
-  _.each(opts, function(opt, name) {
-    if (!_.includes(["robot", "name", "adaptor", "events"], name)) {
-      this.details[name] = opt;
-    }
-  }, this);
-};
-
-Utils.subclass(Adaptor, Basestar);
-
-/**
- * A base connect function. Must be overwritten by a descendent.
- *
- * @throws Error if not overridden by a child class
- * @return {void}
- */
-Adaptor.prototype.connect = function() {
-  var message = formatErrorMessage(
-    this.name,
-    "Adaptor#connect method must be overwritten by descendant classes."
-  );
-
-  throw new Error(message);
-};
-
-/**
- * A base disconnect function. Must be overwritten by a descendent.
- *
- * @throws Error if not overridden by a child class
- * @return {void}
- */
-Adaptor.prototype.disconnect = function() {
-  var message = formatErrorMessage(
-    this.name,
-    "Adaptor#disconnect method must be overwritten by descendant classes."
-  );
-
-  throw new Error(message);
-};
-
-/**
- * Expresses the Adaptor in a JSON-serializable format
- *
- * @return {Object} a representation of the Adaptor in a serializable format
- */
-Adaptor.prototype.toJSON = function() {
-  return {
-    name: this.name,
-    adaptor: this.constructor.name || this.name,
-    details: this.details
-  };
-};
-
-},{"./basestar":43,"./utils":57,"./utils/helpers":58}],42:[function(require,module,exports){
-"use strict";
-
-var MCP = require("./mcp"),
-    Logger = require("./logger"),
-    _ = require("./utils/helpers");
-
-var api = module.exports = {};
-
-api.instances = [];
-
-/**
- * Creates a new API instance
- *
- * @param {String} [Server] which API plugin to use (e.g. "http" loads
- * cylon-api-http)
- * @param {Object} opts options for the new API instance
- * @return {void}
- */
-api.create = function create(Server, opts) {
-  // if only passed options (or nothing), assume HTTP server
-  if (Server == null || _.isObject(Server) && !_.isFunction(Server)) {
-    opts = Server;
-    Server = "http";
-  }
-
-  opts = opts || {};
-
-  if (_.isString(Server)) {
-    var req = "cylon-api-" + Server;
-
-    try {
-      Server = require(req);
-    } catch (e) {
-      if (e.code !== "MODULE_NOT_FOUND") {
-        throw e;
-      }
-
-      [
-        "Cannot find the " + req + " API module.",
-        "You may be able to install it: `npm install " + req + "`"
-      ].forEach(Logger.log);
-
-      throw new Error("Missing API plugin - cannot proceed");
-    }
-  }
-
-  opts.mcp = MCP;
-
-  var instance = new Server(opts);
-  api.instances.push(instance);
-  instance.start();
-};
-
-},{"./logger":49,"./mcp":50,"./utils/helpers":58}],43:[function(require,module,exports){
-"use strict";
-
-var EventEmitter = require("events").EventEmitter;
-
-var Utils = require("./utils"),
-    _ = require("./utils/helpers");
-
-/**
- * The Basestar class is a wrapper class around EventEmitter that underpins most
- * other Cylon adaptor/driver classes, providing useful external base methods
- * and functionality.
- *
- * @constructor Basestar
- */
-var Basestar = module.exports = function Basestar() {
-  Utils.classCallCheck(this, Basestar);
-};
-
-Utils.subclass(Basestar, EventEmitter);
-
-/**
- * Proxies calls from all methods in the source to a target object
- *
- * @param {String[]} methods methods to proxy
- * @param {Object} target object to proxy methods to
- * @param {Object} source object to proxy methods from
- * @param {Boolean} [force=false] whether or not to overwrite existing methods
- * @return {Object} the source
- */
-Basestar.prototype.proxyMethods = Utils.proxyFunctionsToObject;
-
-/**
- * Triggers the provided callback, and emits an event with the provided data.
- *
- * If an error is provided, emits the 'error' event.
- *
- * @param {String} event what event to emit
- * @param {Function} callback function to be invoked with error/data
- * @param {*} err possible error value
- * @param {...*} data data values to be passed to error/callback
- * @return {void}
- */
-Basestar.prototype.respond = function(event, callback, err) {
-  var args = Array.prototype.slice.call(arguments, 3);
-
-  if (err) {
-    this.emit("error", err);
-  } else {
-    this.emit.apply(this, [event].concat(args));
-  }
-
-  if (typeof callback === "function") {
-    callback.apply(this, [err].concat(args));
-  }
-};
-
-/**
- * Defines an event handler to proxy events from a source object to a target
- *
- * @param {Object} opts event options
- * @param {EventEmitter} opts.source source of events to listen for
- * @param {EventEmitter} opts.target target new events should be emitted from
- * @param {String} opts.eventName name of event to listen for, and proxy
- * @param {Bool} [opts.sendUpdate=false] whether to emit the 'update' event
- * @param {String} [opts.targetEventName] new event name to emit from target
- * @return {EventEmitter} the source object
- */
-Basestar.prototype.defineEvent = function(opts) {
-  opts.sendUpdate = opts.sendUpdate || false;
-  opts.targetEventName = opts.targetEventName || opts.eventName;
-
-  opts.source.on(opts.eventName, function() {
-    var args = arguments.length >= 1 ? [].slice.call(arguments, 0) : [];
-    args.unshift(opts.targetEventName);
-    opts.target.emit.apply(opts.target, args);
-
-    if (opts.sendUpdate) {
-      args.unshift("update");
-      opts.target.emit.apply(opts.target, args);
-    }
-  });
-
-  return opts.source;
-};
-
-/**
- * A #defineEvent shorthand for adaptors.
- *
- * Proxies events from an adaptor's connector to the adaptor itself.
- *
- * @param {Object} opts proxy options
- * @return {EventEmitter} the adaptor's connector
- */
-Basestar.prototype.defineAdaptorEvent = function(opts) {
-  return this._proxyEvents(opts, this.connector, this);
-};
-
-/**
- * A #defineEvent shorthand for drivers.
- *
- * Proxies events from an driver's connection to the driver itself.
- *
- * @param {Object} opts proxy options
- * @return {EventEmitter} the driver's connection
- */
-Basestar.prototype.defineDriverEvent = function(opts) {
-  return this._proxyEvents(opts, this.connection, this);
-};
-
-Basestar.prototype._proxyEvents = function(opts, source, target) {
-  opts = _.isString(opts) ? { eventName: opts } : opts;
-
-  opts.source = source;
-  opts.target = target;
-
-  return this.defineEvent(opts);
-};
-
-},{"./utils":57,"./utils/helpers":58,"events":7}],44:[function(require,module,exports){
-"use strict";
-
-var _ = require("./utils/helpers");
-
-var config = module.exports = {},
-    callbacks = [];
-
-// default data
-config.haltTimeout = 3000;
-config.testMode = false;
-config.logger = null;
-config.silent = false;
-config.debug = false;
-
-/**
- * Updates the Config, and triggers handler callbacks
- *
- * @param {Object} data new configuration information to set
- * @return {Object} the updated configuration
- */
-config.update = function update(data) {
-  var forbidden = ["update", "subscribe", "unsubscribe"];
-
-  Object.keys(data).forEach(function(key) {
-    if (~forbidden.indexOf(key)) { delete data[key]; }
-  });
-
-  if (!Object.keys(data).length) {
-    return config;
-  }
-
-  _.extend(config, data);
-
-  callbacks.forEach(function(callback) { callback(data); });
-
-  return config;
-};
-
-/**
- * Subscribes a function to be called whenever the config is updated
- *
- * @param {Function} callback function to be called with updated data
- * @return {void}
- */
-config.subscribe = function subscribe(callback) {
-  callbacks.push(callback);
-};
-
-/**
- * Unsubscribes a callback from configuration changes
- *
- * @param {Function} callback function to unsubscribe from changes
- * @return {void}
- */
-config.unsubscribe = function unsubscribe(callback) {
-  var idx = callbacks.indexOf(callback);
-  if (idx >= 0) { callbacks.splice(idx, 1); }
-};
-
-},{"./utils/helpers":58}],45:[function(require,module,exports){
+},{"_process":14,"buffer":5,"events":7,"util":31}],45:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"./lib/adaptor":46,"./lib/api":47,"./lib/config":49,"./lib/driver":50,"./lib/io/digital-pin":52,"./lib/io/utils":53,"./lib/logger":54,"./lib/mcp":55,"./lib/robot":57,"./lib/utils":62,"_process":14,"dup":32,"readline":1}],46:[function(require,module,exports){
+arguments[4][33][0].apply(exports,arguments)
+},{"./basestar":48,"./utils":62,"./utils/helpers":63,"dup":33}],47:[function(require,module,exports){
+arguments[4][34][0].apply(exports,arguments)
+},{"./logger":54,"./mcp":55,"./utils/helpers":63,"dup":34}],48:[function(require,module,exports){
+arguments[4][35][0].apply(exports,arguments)
+},{"./utils":62,"./utils/helpers":63,"dup":35,"events":7}],49:[function(require,module,exports){
+arguments[4][36][0].apply(exports,arguments)
+},{"./utils/helpers":63,"dup":36}],50:[function(require,module,exports){
 "use strict";
 
 var Basestar = require("./basestar"),
@@ -14795,7 +14805,7 @@ Driver.prototype.toJSON = function() {
   };
 };
 
-},{"./basestar":43,"./utils":57,"./utils/helpers":58}],46:[function(require,module,exports){
+},{"./basestar":48,"./utils":62,"./utils/helpers":63}],51:[function(require,module,exports){
 (function (process){
 "use strict";
 
@@ -14855,7 +14865,7 @@ module.exports = function Initializer(type, opts) {
 };
 
 }).call(this,require('_process'))
-},{"./config":44,"./registry":51,"./utils/helpers":58,"_process":14}],47:[function(require,module,exports){
+},{"./config":49,"./registry":56,"./utils/helpers":63,"_process":14}],52:[function(require,module,exports){
 /* eslint no-sync: 0 */
 
 "use strict";
@@ -15037,7 +15047,7 @@ DigitalPin.prototype._unexportPath = function() {
   return GPIO_PATH + "/unexport";
 };
 
-},{"../utils":57,"events":7,"fs":1}],48:[function(require,module,exports){
+},{"../utils":62,"events":7,"fs":1}],53:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -15074,7 +15084,7 @@ module.exports = {
   }
 };
 
-},{}],49:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 (function (process){
 "use strict";
 
@@ -15160,7 +15170,7 @@ Config.subscribe(setup);
 });
 
 }).call(this,require('_process'))
-},{"./config":44,"./utils/helpers":58,"_process":14}],50:[function(require,module,exports){
+},{"./config":49,"./utils/helpers":63,"_process":14}],55:[function(require,module,exports){
 "use strict";
 
 var EventEmitter = require("events").EventEmitter;
@@ -15244,7 +15254,7 @@ mcp.toJSON = function() {
   };
 };
 
-},{"./config":44,"./logger":49,"./robot":52,"./utils":57,"./utils/helpers":58,"events":7}],51:[function(require,module,exports){
+},{"./config":49,"./logger":54,"./robot":57,"./utils":62,"./utils/helpers":63,"events":7}],56:[function(require,module,exports){
 (function (process){
 "use strict";
 
@@ -15356,7 +15366,7 @@ var Registry = module.exports = {
 });
 
 }).call(this,require('_process'))
-},{"./logger":49,"./test/loopback":53,"./test/ping":54,"./test/test-adaptor":55,"./test/test-driver":56,"./utils/helpers":58,"_process":14}],52:[function(require,module,exports){
+},{"./logger":54,"./test/loopback":58,"./test/ping":59,"./test/test-adaptor":60,"./test/test-driver":61,"./utils/helpers":63,"_process":14}],57:[function(require,module,exports){
 (function (process){
 "use strict";
 
@@ -15776,7 +15786,7 @@ Robot.prototype.log = function(str) {
 };
 
 }).call(this,require('_process'))
-},{"./config":44,"./initializer":46,"./logger":49,"./utils":57,"./utils/helpers":58,"./validator":60,"_process":14,"events":7}],53:[function(require,module,exports){
+},{"./config":49,"./initializer":51,"./logger":54,"./utils":62,"./utils/helpers":63,"./validator":65,"_process":14,"events":7}],58:[function(require,module,exports){
 "use strict";
 
 var Adaptor = require("../adaptor"),
@@ -15799,7 +15809,7 @@ Loopback.prototype.disconnect = function(callback) {
 Loopback.adaptors = ["loopback"];
 Loopback.adaptor = function(opts) { return new Loopback(opts); };
 
-},{"../adaptor":41,"../utils":57}],54:[function(require,module,exports){
+},{"../adaptor":46,"../utils":62}],59:[function(require,module,exports){
 "use strict";
 
 var Driver = require("../driver"),
@@ -15833,7 +15843,7 @@ Ping.prototype.halt = function(callback) {
 Ping.drivers = ["ping"];
 Ping.driver = function(opts) { return new Ping(opts); };
 
-},{"../driver":45,"../utils":57}],55:[function(require,module,exports){
+},{"../driver":50,"../utils":62}],60:[function(require,module,exports){
 "use strict";
 
 var Adaptor = require("../adaptor"),
@@ -15848,7 +15858,7 @@ Utils.subclass(TestAdaptor, Adaptor);
 TestAdaptor.adaptors = ["test"];
 TestAdaptor.adaptor = function(opts) { return new TestAdaptor(opts); };
 
-},{"../adaptor":41,"../utils":57}],56:[function(require,module,exports){
+},{"../adaptor":46,"../utils":62}],61:[function(require,module,exports){
 "use strict";
 
 var Driver = require("../driver"),
@@ -15863,7 +15873,7 @@ Utils.subclass(TestDriver, Driver);
 TestDriver.drivers = ["test"];
 TestDriver.driver = function(opts) { return new TestDriver(opts); };
 
-},{"../driver":45,"../utils":57}],57:[function(require,module,exports){
+},{"../driver":50,"../utils":62}],62:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -16100,7 +16110,7 @@ var Utils = module.exports = {
 Utils.bootstrap();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./utils/helpers":58,"./utils/monkey-patches":59}],58:[function(require,module,exports){
+},{"./utils/helpers":63,"./utils/monkey-patches":64}],63:[function(require,module,exports){
 "use strict";
 
 /* eslint no-use-before-define: 0 */
@@ -16377,7 +16387,7 @@ extend(H, {
   series: series
 });
 
-},{}],59:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 /* eslint no-extend-native: 0 key-spacing: 0 */
 
 "use strict";
@@ -16528,7 +16538,7 @@ module.exports.install = function() {
   };
 };
 
-},{}],60:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 "use strict";
 
 // validates an Object containing Robot parameters
@@ -16632,7 +16642,7 @@ module.exports.validate = function validate(opts) {
   });
 };
 
-},{"./logger":49,"./utils/helpers":58}],61:[function(require,module,exports){
+},{"./logger":54,"./utils/helpers":63}],66:[function(require,module,exports){
 'use strict';
 
 var keys = require('object-keys');
@@ -16690,7 +16700,7 @@ defineProperties.supportsDescriptors = !!supportsDescriptors;
 
 module.exports = defineProperties;
 
-},{"foreach":62,"object-keys":65}],62:[function(require,module,exports){
+},{"foreach":67,"object-keys":70}],67:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -16714,7 +16724,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],63:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 var ERROR_MESSAGE = 'Function.prototype.bind called on incompatible ';
 var slice = Array.prototype.slice;
 var toStr = Object.prototype.toString;
@@ -16764,12 +16774,12 @@ module.exports = function bind(that) {
     return bound;
 };
 
-},{}],64:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 var implementation = require('./implementation');
 
 module.exports = Function.prototype.bind || implementation;
 
-},{"./implementation":63}],65:[function(require,module,exports){
+},{"./implementation":68}],70:[function(require,module,exports){
 'use strict';
 
 // modified from https://github.com/es-shims/es5-shim
@@ -16911,7 +16921,7 @@ keysShim.shim = function shimObjectKeys() {
 
 module.exports = keysShim;
 
-},{"./isArguments":66}],66:[function(require,module,exports){
+},{"./isArguments":71}],71:[function(require,module,exports){
 'use strict';
 
 var toStr = Object.prototype.toString;
@@ -16930,7 +16940,7 @@ module.exports = function isArguments(value) {
 	return isArgs;
 };
 
-},{}],67:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 'use strict';
 
 var keys = require('object-keys');
@@ -16973,7 +16983,7 @@ module.exports = function hasSymbols() {
 	return true;
 };
 
-},{"object-keys":65}],68:[function(require,module,exports){
+},{"object-keys":70}],73:[function(require,module,exports){
 'use strict';
 
 // modified from https://github.com/es-shims/es6-shim
@@ -17016,7 +17026,7 @@ module.exports = function assign(target, source1) {
 	return objTarget;
 };
 
-},{"./hasSymbols":67,"function-bind":64,"object-keys":65}],69:[function(require,module,exports){
+},{"./hasSymbols":72,"function-bind":69,"object-keys":70}],74:[function(require,module,exports){
 'use strict';
 
 var defineProperties = require('define-properties');
@@ -17035,7 +17045,7 @@ defineProperties(polyfill, {
 
 module.exports = polyfill;
 
-},{"./implementation":68,"./polyfill":70,"./shim":71,"define-properties":61}],70:[function(require,module,exports){
+},{"./implementation":73,"./polyfill":75,"./shim":76,"define-properties":66}],75:[function(require,module,exports){
 'use strict';
 
 var implementation = require('./implementation');
@@ -17088,7 +17098,7 @@ module.exports = function getPolyfill() {
 	return Object.assign;
 };
 
-},{"./implementation":68}],71:[function(require,module,exports){
+},{"./implementation":73}],76:[function(require,module,exports){
 'use strict';
 
 var define = require('define-properties');
@@ -17104,7 +17114,7 @@ module.exports = function shimAssign() {
 	return polyfill;
 };
 
-},{"./polyfill":70,"define-properties":61}],72:[function(require,module,exports){
+},{"./polyfill":75,"define-properties":66}],77:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -17142,7 +17152,7 @@ module.exports = {
 };
 
 }).call(this,require('_process'))
-},{"./list-unix":73,"_process":14,"bindings":37}],73:[function(require,module,exports){
+},{"./list-unix":78,"_process":14,"bindings":42}],78:[function(require,module,exports){
 'use strict';
 var Promise = require('bluebird');
 var childProcess = Promise.promisifyAll(require('child_process'));
@@ -17225,7 +17235,7 @@ function listUnix(callback) {
 
 module.exports = listUnix;
 
-},{"bluebird":38,"child_process":1,"fs":1,"path":12}],74:[function(require,module,exports){
+},{"bluebird":43,"child_process":1,"fs":1,"path":12}],79:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -17293,7 +17303,7 @@ module.exports = {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":5}],75:[function(require,module,exports){
+},{"buffer":5}],80:[function(require,module,exports){
 (function (process,Buffer){
 'use strict';
 
@@ -17831,7 +17841,7 @@ SerialPort.prototype.drain = function (callback) {
 module.exports = factory;
 
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"./bindings":72,"./parsers":74,"_process":14,"buffer":5,"debug":76,"events":7,"fs":1,"object.assign":69,"stream":26,"util":31}],76:[function(require,module,exports){
+},{"./bindings":77,"./parsers":79,"_process":14,"buffer":5,"debug":81,"events":7,"fs":1,"object.assign":74,"stream":26,"util":31}],81:[function(require,module,exports){
 
 /**
  * This is the web browser implementation of `debug()`.
@@ -18001,7 +18011,7 @@ function localstorage(){
   } catch (e) {}
 }
 
-},{"./debug":77}],77:[function(require,module,exports){
+},{"./debug":82}],82:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -18200,7 +18210,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":78}],78:[function(require,module,exports){
+},{"ms":83}],83:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -18327,7 +18337,7 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's';
 }
 
-},{}],79:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 "use strict";
 
 var Sphero = require("./lib/sphero");
@@ -18351,7 +18361,7 @@ module.exports = function sphero(address, opts) {
   return new Sphero(address, opts);
 };
 
-},{"./lib/sphero":91}],80:[function(require,module,exports){
+},{"./lib/sphero":96}],85:[function(require,module,exports){
 "use strict";
 
 var util = require("util"),
@@ -18460,7 +18470,7 @@ Adaptor.prototype.close = function close(callback) {
   this.serialport.close(callback);
 };
 
-},{"browser-serialport":39,"events":7,"serialport":75,"util":31}],81:[function(require,module,exports){
+},{"browser-serialport":44,"events":7,"serialport":80,"util":31}],86:[function(require,module,exports){
 /* eslint key-spacing: 0 */
 "use strict";
 
@@ -18608,7 +18618,7 @@ module.exports = {
   yellowgreen          : 0x9acd32
 };
 
-},{}],82:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 /* eslint key-spacing: 0 */
 "use strict";
 
@@ -18634,7 +18644,7 @@ module.exports = {
   pollTimes        : 0x51
 };
 
-},{}],83:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 /* eslint key-spacing: 0 */
 "use strict";
 
@@ -18698,7 +18708,7 @@ module.exports = {
   commitToFlashAlias    : 0x70
 };
 
-},{}],84:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 "use strict";
 
 var utils = require("../utils"),
@@ -19162,7 +19172,7 @@ module.exports = function core(device) {
   };
 };
 
-},{"../commands/core":82,"../utils":92}],85:[function(require,module,exports){
+},{"../commands/core":87,"../utils":97}],90:[function(require,module,exports){
 "use strict";
 
 // "custom" Sphero commands.
@@ -19640,7 +19650,7 @@ module.exports = function custom(device) {
   };
 };
 
-},{"../colors":81,"../utils":92}],86:[function(require,module,exports){
+},{"../colors":86,"../utils":97}],91:[function(require,module,exports){
 "use strict";
 
 var utils = require("../utils"),
@@ -20993,7 +21003,7 @@ module.exports = function sphero(device) {
   };
 };
 
-},{"../commands/sphero":83,"../utils":92}],87:[function(require,module,exports){
+},{"../commands/sphero":88,"../utils":97}],92:[function(require,module,exports){
 "use strict";
 
 function isSerialPort(str) {
@@ -21023,7 +21033,7 @@ module.exports.load = function load(conn) {
   return new Adaptor(conn);
 };
 
-},{"./adaptors/serialport":80}],88:[function(require,module,exports){
+},{"./adaptors/serialport":85}],93:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 
@@ -21387,7 +21397,7 @@ Packet.prototype._extractDlen = function(buffer) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"./parsers/async.js":89,"./parsers/response.js":90,"./utils":92,"buffer":5,"events":7,"util":31}],89:[function(require,module,exports){
+},{"./parsers/async.js":94,"./parsers/response.js":95,"./utils":97,"buffer":5,"events":7,"util":31}],94:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -22075,7 +22085,7 @@ module.exports = {
   }
 };
 
-},{}],90:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -22765,7 +22775,7 @@ module.exports = {
   }
 };
 
-},{}],91:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 "use strict";
 
 var util = require("util"),
@@ -23077,7 +23087,7 @@ Sphero.prototype._incSeq = function() {
   return this.seqCounter++;
 };
 
-},{"./devices/core":84,"./devices/custom":85,"./devices/sphero":86,"./loader":87,"./packet":88,"events":7,"util":31}],92:[function(require,module,exports){
+},{"./devices/core":89,"./devices/custom":90,"./devices/sphero":91,"./loader":92,"./packet":93,"events":7,"util":31}],97:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 
@@ -23209,23 +23219,13 @@ exports.xor32bit = function xor32bit(value, mask) {
   return exports.bufferToInt(bytes);
 };
 
-}).call(this,{"isBuffer":require("../../../../browserify/node_modules/is-buffer/index.js")})
-},{"../../../../browserify/node_modules/is-buffer/index.js":10}],93:[function(require,module,exports){
-arguments[4][40][0].apply(exports,arguments)
-},{"./lib/adaptor":94,"./lib/api":95,"./lib/config":97,"./lib/driver":98,"./lib/io/digital-pin":100,"./lib/io/utils":101,"./lib/logger":102,"./lib/mcp":103,"./lib/robot":105,"./lib/utils":110,"_process":14,"dup":40,"readline":1}],94:[function(require,module,exports){
-arguments[4][41][0].apply(exports,arguments)
-},{"./basestar":96,"./utils":110,"./utils/helpers":111,"dup":41}],95:[function(require,module,exports){
-arguments[4][42][0].apply(exports,arguments)
-},{"./logger":102,"./mcp":103,"./utils/helpers":111,"dup":42}],96:[function(require,module,exports){
-arguments[4][43][0].apply(exports,arguments)
-},{"./utils":110,"./utils/helpers":111,"dup":43,"events":7}],97:[function(require,module,exports){
-arguments[4][44][0].apply(exports,arguments)
-},{"./utils/helpers":111,"dup":44}],98:[function(require,module,exports){
+}).call(this,{"isBuffer":require("../../../../../../browserify/node_modules/is-buffer/index.js")})
+},{"../../../../../../browserify/node_modules/is-buffer/index.js":10}],98:[function(require,module,exports){
 "use strict";
 
 var Basestar = require("./basestar"),
     Utils = require("./utils"),
-    _ = require("cylon-sphero")
+    _ = require("./cylon-sphero")
     _ = require("./utils/helpers");
 
 function formatErrorMessage(name, message) {
@@ -23355,17 +23355,17 @@ Driver.prototype.toJSON = function() {
   };
 };
 
-},{"./basestar":96,"./utils":110,"./utils/helpers":111,"cylon-sphero":32}],99:[function(require,module,exports){
-arguments[4][46][0].apply(exports,arguments)
-},{"./config":97,"./registry":104,"./utils/helpers":111,"_process":14,"dup":46}],100:[function(require,module,exports){
-arguments[4][47][0].apply(exports,arguments)
-},{"../utils":110,"dup":47,"events":7,"fs":1}],101:[function(require,module,exports){
-arguments[4][48][0].apply(exports,arguments)
-},{"dup":48}],102:[function(require,module,exports){
-arguments[4][49][0].apply(exports,arguments)
-},{"./config":97,"./utils/helpers":111,"_process":14,"dup":49}],103:[function(require,module,exports){
-arguments[4][50][0].apply(exports,arguments)
-},{"./config":97,"./logger":102,"./robot":105,"./utils":110,"./utils/helpers":111,"dup":50,"events":7}],104:[function(require,module,exports){
+},{"./basestar":35,"./cylon-sphero":37,"./utils":110,"./utils/helpers":111}],99:[function(require,module,exports){
+arguments[4][51][0].apply(exports,arguments)
+},{"./config":36,"./registry":104,"./utils/helpers":111,"_process":14,"dup":51}],100:[function(require,module,exports){
+arguments[4][52][0].apply(exports,arguments)
+},{"../utils":110,"dup":52,"events":7,"fs":1}],101:[function(require,module,exports){
+arguments[4][53][0].apply(exports,arguments)
+},{"dup":53}],102:[function(require,module,exports){
+arguments[4][54][0].apply(exports,arguments)
+},{"./config":36,"./utils/helpers":111,"_process":14,"dup":54}],103:[function(require,module,exports){
+arguments[4][55][0].apply(exports,arguments)
+},{"./config":36,"./logger":102,"./robot":105,"./utils":110,"./utils/helpers":111,"dup":55,"events":7}],104:[function(require,module,exports){
 (function (process){
 "use strict";
 
@@ -23909,23 +23909,23 @@ Robot.prototype.log = function(str) {
 };
 
 }).call(this,require('_process'))
-},{"./config":97,"./initializer":99,"./logger":102,"./utils":110,"./utils/helpers":111,"./validator":113,"_process":14,"events":7}],106:[function(require,module,exports){
-arguments[4][53][0].apply(exports,arguments)
-},{"../adaptor":94,"../utils":110,"dup":53}],107:[function(require,module,exports){
-arguments[4][54][0].apply(exports,arguments)
-},{"../driver":98,"../utils":110,"dup":54}],108:[function(require,module,exports){
-arguments[4][55][0].apply(exports,arguments)
-},{"../adaptor":94,"../utils":110,"dup":55}],109:[function(require,module,exports){
-arguments[4][56][0].apply(exports,arguments)
-},{"../driver":98,"../utils":110,"dup":56}],110:[function(require,module,exports){
-arguments[4][57][0].apply(exports,arguments)
-},{"./utils/helpers":111,"./utils/monkey-patches":112,"dup":57}],111:[function(require,module,exports){
+},{"./config":36,"./initializer":99,"./logger":102,"./utils":110,"./utils/helpers":111,"./validator":113,"_process":14,"events":7}],106:[function(require,module,exports){
 arguments[4][58][0].apply(exports,arguments)
-},{"dup":58}],112:[function(require,module,exports){
+},{"../adaptor":33,"../utils":110,"dup":58}],107:[function(require,module,exports){
 arguments[4][59][0].apply(exports,arguments)
-},{"dup":59}],113:[function(require,module,exports){
+},{"../driver":98,"../utils":110,"dup":59}],108:[function(require,module,exports){
 arguments[4][60][0].apply(exports,arguments)
-},{"./logger":102,"./utils/helpers":111,"dup":60}],114:[function(require,module,exports){
+},{"../adaptor":33,"../utils":110,"dup":60}],109:[function(require,module,exports){
+arguments[4][61][0].apply(exports,arguments)
+},{"../driver":98,"../utils":110,"dup":61}],110:[function(require,module,exports){
+arguments[4][62][0].apply(exports,arguments)
+},{"./utils/helpers":111,"./utils/monkey-patches":112,"dup":62}],111:[function(require,module,exports){
+arguments[4][63][0].apply(exports,arguments)
+},{"dup":63}],112:[function(require,module,exports){
+arguments[4][64][0].apply(exports,arguments)
+},{"dup":64}],113:[function(require,module,exports){
+arguments[4][65][0].apply(exports,arguments)
+},{"./logger":102,"./utils/helpers":111,"dup":65}],114:[function(require,module,exports){
 (function(ext) {
     var device = null;
     var connected = false;
@@ -23977,4 +23977,4 @@ arguments[4][60][0].apply(exports,arguments)
     // Register the extension
     ScratchExtensions.register('Sample extension', descriptor, ext, serial_info);
 })({});
-},{"cylon":93}]},{},[114]);
+},{"cylon":32}]},{},[114]);
