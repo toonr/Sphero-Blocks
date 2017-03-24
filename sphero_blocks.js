@@ -1,6 +1,5 @@
 (function(ext) {
     var device = null;
-    var status = false;
     var SpheroConnection;
     var SpheroStatus = 0;
     var SpheroAppID = getRequest().id?getRequest().id:"falgapmgoopapgbocigmjlclilgjgijb"; //unique app ID for Sphero Scratch App
@@ -35,14 +34,19 @@
     }
    
     ext._getStatus = function() {
-        return {status: SpheroStatus, msg: SpheroStatus==2?'Ready':'Not Ready'};
+        return {status: SpheroStatus,
+                msg: if (SpheroStatus==0) {'Chrome App not found'}
+                     else if (SpheroStatus == 1) {'Not Ready'}
+                          else {'Ready'};
+                };
     };
+    
     ext._shutdown = function() {
-        //if(poller) poller = clearInterval(poller);
-        status = false;
+
     }
+
     function getSpheroAppStatus() {
-        chrome.runtime.sendMessage(SpheroAppID, {message: "STATUS"}, function (response) {
+        chrome.runtime.sendMessage(SpheroAppID, {message: "Status"}, function (response) {
             if (response === undefined) { //Chrome app not found
                 console.log("Chrome app not found");
                 SpheroStatus = 0;
@@ -57,19 +61,13 @@
                     console.log("Connected");
                     SpheroConnection = chrome.runtime.connect(SpheroAppID);
                     console.log(SpheroConnection);
-                    SpheroConnection.onMessage.addListener(onMsgApp);
                 }
                 SpheroStatus = 2;
                 setTimeout(getSpheroAppStatus, 1000);
             }
         });
     };
-    function onMsgApp(msg) {
-        var buffer = msg.buffer;
-        for(var i=0;i<buffer.length;i++){
-            //onParse(buffer[i]);
-        }
-    };
+
     getSpheroAppStatus();
     // Register the extension
     ScratchExtensions.register('Sample extension', descriptor, ext);
