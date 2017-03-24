@@ -1,6 +1,5 @@
 (function(ext) {
-    var device = null;
-    var SpheroConnection;
+    var SpheroConnection = null;
     var SpheroStatus = 0;
     var SpheroAppID = getRequest().id?getRequest().id:"falgapmgoopapgbocigmjlclilgjgijb"; //unique app ID for Sphero Scratch App
 
@@ -40,15 +39,10 @@
         else {response.msg = 'Ready'};
         return response;
     };
-    
-    ext._shutdown = function() {
-
-    }
 
     function getSpheroAppStatus() {
         chrome.runtime.sendMessage(SpheroAppID, {message: "Status"}, function (response) {
             if (response === undefined) { //Chrome app not found
-                console.log("Chrome app not found");
                 SpheroStatus = 0;
                 setTimeout(getSpheroAppStatus, 1000);
             }
@@ -58,9 +52,7 @@
             }
             else {// successfully connected
                 if (SpheroStatus !==2) {
-                    console.log("Connected");
                     SpheroConnection = chrome.runtime.connect(SpheroAppID);
-                    console.log(SpheroConnection);
                 }
                 SpheroStatus = 2;
                 setTimeout(getSpheroAppStatus, 1000);
@@ -69,6 +61,7 @@
     };
 
     getSpheroAppStatus();
+
     // Register the extension
     ScratchExtensions.register('Sample extension', descriptor, ext);
 })({});
