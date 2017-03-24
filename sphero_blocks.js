@@ -34,11 +34,11 @@
     }
    
     ext._getStatus = function() {
-        return {status: SpheroStatus,
-                msg: { if (SpheroStatus==0) {'Chrome App not found'}
-                       else if (SpheroStatus == 1) {'Not Ready'}
-                       else {'Ready'}; }
-                };
+        var response = {status: SpheroStatus}
+        if (SpheroStatus==0) {response.msg = 'Chrome App not found'}
+        else if (SpheroStatus == 1) {response.msg = 'Not Ready'}
+        else {response.msg = 'Ready'};
+        return response;
     };
     
     ext._shutdown = function() {
