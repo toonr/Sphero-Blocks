@@ -35,9 +35,9 @@
    
     ext._getStatus = function() {
         return {status: SpheroStatus,
-                msg: if (SpheroStatus==0) {'Chrome App not found'}
-                     else if (SpheroStatus == 1) {'Not Ready'}
-                          else {'Ready'};
+                msg: { if (SpheroStatus==0) {'Chrome App not found'}
+                       else if (SpheroStatus == 1) {'Not Ready'}
+                       else {'Ready'}; }
                 };
     };
     
