@@ -8,10 +8,16 @@
         chrome.runtime.sendMessage(SpheroAppID, {message: "Change color", parameter: color});
     };
 
+    ext.run = function() {
+        console.log("Run Program called");
+        chrome.runtime.sendMessage(SpheroAppID, {message: "Run program"});
+    };
+
     // Block and block menu descriptions
     var descriptor = {
         blocks: [
-            [' ', 'Change color to %m.colors', 'change_color', 'blue']
+            [' ', 'Change color to %m.colors', 'change_color', 'blue'],
+            [' ', 'Run Sphero program', 'run']
         ],
         menus: {
             colors: ['blue', 'red', 'green', 'yellow', 'purple', 'pink', 'orange', 'white', 'black', 'gold']
