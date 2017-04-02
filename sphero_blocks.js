@@ -14,7 +14,7 @@
             [' ', 'Change color to %m.colors', 'change_color', 'blue']
         ],
         menus: {
-            colors: ['blue', 'red', 'green']
+            colors: ['blue', 'red', 'green', 'yellow', 'purple', 'pink', 'orange', 'white', 'black', 'gold']
         },
         url: 'https://toonr.github.io/Sphero-Blocks/sphero_blocks.js'
     };
