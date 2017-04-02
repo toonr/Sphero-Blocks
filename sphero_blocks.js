@@ -11,8 +11,11 @@
     // Block and block menu descriptions
     var descriptor = {
         blocks: [
-            [' ', 'Change color', 'change_color']
+            [' ', 'Change color to %m.colors', 'change_color', 'blue']
         ],
+        menus: {
+            colors: ['blue', 'red', 'green']
+        },
         url: 'https://toonr.github.io/Sphero-Blocks/sphero_blocks.js'
     };
 
