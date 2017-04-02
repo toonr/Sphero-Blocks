@@ -10,11 +10,11 @@
 
     ext.run = function() {
         console.log("Run Program called");
-        if (SpheroStatus = 2) {
+        if (SpheroStatus === 2) {
             chrome.runtime.sendMessage(SpheroAppID, {message: "Run program"});
         }
         else {
-            if (SpheroStatus = 1) {
+            if (SpheroStatus === 1) {
                 alert("No Sphero connected!");
             }
             else {
