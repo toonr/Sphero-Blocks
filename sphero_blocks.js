@@ -3,14 +3,15 @@
     var SpheroStatus = 0;
     var SpheroAppID = getRequest().id?getRequest().id:"falgapmgoopapgbocigmjlclilgjgijb"; //unique app ID for Sphero Scratch App
 
-    ext.my_first_block = function() {
-        console.log("test");
+    ext.change_color = function(color) {
+        console.log("Change Color called");
+        chrome.runtime.sendMessage(SpheroAppID, {message: "Change color", parameter: color});
     };
 
     // Block and block menu descriptions
     var descriptor = {
         blocks: [
-            [' ', 'my first block', 'my_first_block']
+            [' ', 'Change color', 'change_color']
         ],
         url: 'https://toonr.github.io/Sphero-Blocks/sphero_blocks.js'
     };
