@@ -10,7 +10,17 @@
 
     ext.run = function() {
         console.log("Run Program called");
-        chrome.runtime.sendMessage(SpheroAppID, {message: "Run program"});
+        if (SpheroStatus = 2) {
+            chrome.runtime.sendMessage(SpheroAppID, {message: "Run program"});
+        }
+        else {
+            if (SpheroStatus = 1) {
+                alert("No Sphero connected!");
+            }
+            else {
+                alert("Chrome application not found!");
+            }
+        }
     };
 
     // Block and block menu descriptions
