@@ -8,10 +8,16 @@
         chrome.runtime.sendMessage(SpheroAppID, {message: "Change color", parameter: color});
     };
 
+    ext.on_collision = function() {
+        console.log("On Collision called");
+        chrome.runtime.sendMessage(SpheroAppID, {message: "On collision"});
+    };
+
     // Block and block menu descriptions
     var descriptor = {
         blocks: [
-            [' ', 'Change color to %m.colors', 'change_color', 'blue']
+            [' ', 'Change color to %m.colors', 'change_color', 'blue'],
+            ['c', 'On collision do', 'on_collision']
         ],
         menus: {
             colors: ['blue', 'red', 'green', 'yellow', 'purple', 'pink', 'orange', 'white', 'gold']
