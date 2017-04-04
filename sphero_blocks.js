@@ -8,7 +8,8 @@
         chrome.runtime.sendMessage(SpheroAppID, {message: "Change color", parameter: color});
     };
 
-    ext.on_collision = function() {
+    ext.on_collision = function(data) {
+        console.log(data);
         console.log("On Collision called");
         chrome.runtime.sendMessage(SpheroAppID, {message: "On collision"});
     };
