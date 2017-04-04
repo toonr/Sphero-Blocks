@@ -5,20 +5,19 @@
 
     ext.change_color = function(color) {
         console.log("Change Color called");
-        chrome.runtime.sendMessage(SpheroAppID, {message: "Change color", parameter: color});
+        chrome.runtime.sendMessage(SpheroAppID, {message: "Change color", color: color});
     };
 
-    ext.on_collision = function(data) {
-        console.log(data);
-        console.log("On Collision called");
-        chrome.runtime.sendMessage(SpheroAppID, {message: "On collision"});
+    ext.roll = function(speed, direction) {
+        console.log("Change Color called");
+        chrome.runtime.sendMessage(SpheroAppID, {message: "Roll", speed: speed, direction: direction});
     };
 
     // Block and block menu descriptions
     var descriptor = {
         blocks: [
             [' ', 'Change color to %m.colors', 'change_color', 'blue'],
-            ['c', 'On collision do', 'on_collision']
+            [' ', 'Roll with speed %n in direction %n', 'roll', 90, 0]
         ],
         menus: {
             colors: ['blue', 'red', 'green', 'yellow', 'purple', 'pink', 'orange', 'white', 'gold']
