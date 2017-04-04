@@ -52,7 +52,7 @@
             [' ', 'Change color to %m.colors', 'change_color', 'blue'],
             [' ', 'Change to a random color', 'random_color'],
             [' ', 'Roll with speed %n in direction %n', 'roll', 60, 0],
-            [' ', 'Roll with speed %n in direction %n during %n seconds', 'roll', 60, 0, 1],
+            [' ', 'Roll with speed %n in direction %n during %n seconds', 'roll_timer', 60, 0, 1],
             [' ', 'Stop rolling', 'stop']
         ],
         menus: {
