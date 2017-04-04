@@ -9,15 +9,21 @@
     };
 
     ext.roll = function(speed, direction) {
-        console.log("Change Color called");
+        console.log("Roll called");
         chrome.runtime.sendMessage(SpheroAppID, {message: "Roll", speed: speed, direction: direction});
+    };
+
+    ext.stop = function() {
+        console.log("Stop called");
+        chrome.runtime.sendMessage(SpheroAppID, {message: "Stop"});
     };
 
     // Block and block menu descriptions
     var descriptor = {
         blocks: [
             [' ', 'Change color to %m.colors', 'change_color', 'blue'],
-            [' ', 'Roll with speed %n in direction %n', 'roll', 90, 0]
+            [' ', 'Roll with speed %n in direction %n', 'roll', 90, 0],
+            [' ', 'Stop rolling', 'stop']
         ],
         menus: {
             colors: ['blue', 'red', 'green', 'yellow', 'purple', 'pink', 'orange', 'white', 'gold']
