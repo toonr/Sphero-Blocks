@@ -8,13 +8,18 @@
         chrome.runtime.sendMessage(SpheroAppID, {message: "Change color", color: color});
     };
 
+    ext.random_color = function() {
+        console.log("Random Color called");
+        chrome.runtime.sendMessage(SpheroAppID, {message: "Random color"});
+    };
+
     ext.roll = function(speed, direction) {
         console.log("Roll called");
         if (direction > 359) {
             chrome.runtime.sendMessage(SpheroAppID, {message: "Roll", speed: speed, direction: 359});
         }
         else if (direction < 0) {
-            chrome.runtime.sendMessage(SpheroAppID, {message: "Roll", speed: speed, direction: 0});
+            chrome.runtime.sendMessage(SpheroAppID, {message: "Roll", speed: speed, direction: 0ss});
         }
         else {
             chrome.runtime.sendMessage(SpheroAppID, {message: "Roll", speed: speed, direction: direction});
@@ -30,6 +35,7 @@
     var descriptor = {
         blocks: [
             [' ', 'Change color to %m.colors', 'change_color', 'blue'],
+            [' ', 'Change to a random color', 'random_color'],
             [' ', 'Roll with speed %n in direction %n', 'roll', 90, 0],
             [' ', 'Stop rolling', 'stop']
         ],
