@@ -19,7 +19,7 @@
             chrome.runtime.sendMessage(SpheroAppID, {message: "Roll", speed: speed, direction: 359});
         }
         else if (direction < 0) {
-            chrome.runtime.sendMessage(SpheroAppID, {message: "Roll", speed: speed, direction: 0ss});
+            chrome.runtime.sendMessage(SpheroAppID, {message: "Roll", speed: speed, direction: 0});
         }
         else {
             chrome.runtime.sendMessage(SpheroAppID, {message: "Roll", speed: speed, direction: direction});
