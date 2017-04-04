@@ -26,6 +26,21 @@
         }
     };
 
+    ext.roll_timer = function(speed, direction, time) {
+        console.log("Roll Timer called");
+        if (time > 0) {
+            if (direction > 359) {
+                chrome.runtime.sendMessage(SpheroAppID, {message: "Roll timer", speed: speed, direction: 359, time: time});
+            }
+            else if (direction < 0) {
+                chrome.runtime.sendMessage(SpheroAppID, {message: "Roll timer", speed: speed, direction: 0, time: time});
+            }
+            else {
+                chrome.runtime.sendMessage(SpheroAppID, {message: "Roll timer", speed: speed, direction: direction, time: time});
+            }
+        }
+    };
+
     ext.stop = function() {
         console.log("Stop called");
         chrome.runtime.sendMessage(SpheroAppID, {message: "Stop"});
@@ -36,7 +51,8 @@
         blocks: [
             [' ', 'Change color to %m.colors', 'change_color', 'blue'],
             [' ', 'Change to a random color', 'random_color'],
-            [' ', 'Roll with speed %n in direction %n', 'roll', 90, 0],
+            [' ', 'Roll with speed %n in direction %n', 'roll', 60, 0],
+            [' ', 'Roll with speed %n in direction %n during %n seconds', 'roll', 60, 0, 1],
             [' ', 'Stop rolling', 'stop']
         ],
         menus: {
