@@ -38,6 +38,7 @@
             else {
                 chrome.runtime.sendMessage(SpheroAppID, {message: "Roll timer", speed: speed, direction: direction, time: time});
             };
+            console.log(callback);
             window.setTimeout(function() {
                 callback();
             }, time*1000);
