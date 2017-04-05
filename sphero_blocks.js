@@ -13,6 +13,11 @@
         chrome.runtime.sendMessage(SpheroAppID, {message: "Random color"});
     };
 
+    ext.go_crazy = function() {
+        console.log("Go Crazy called");
+        chrome.runtime.sendMessage(SpheroAppID, {message: "Go crazy"});
+    };
+
     ext.roll = function(speed, direction) {
         console.log("Roll called");
         if (direction > 359) {
@@ -51,6 +56,7 @@
         blocks: [
             [' ', 'Change color to %m.colors', 'change_color', 'blue'],
             [' ', 'Change to a random color', 'random_color'],
+            [' ', 'Go crazy', 'go_crazy'],
             [' ', 'Roll with speed %n in direction %n', 'roll', 60, 0],
             [' ', 'Roll with speed %n in direction %n during %n seconds', 'roll_timer', 60, 0, 1],
             [' ', 'Stop rolling', 'stop']
