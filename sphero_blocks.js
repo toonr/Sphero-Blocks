@@ -49,6 +49,22 @@
         chrome.runtime.sendMessage(SpheroAppID, {message: "Stop"});
     };
 
+    ext.on_collision = function() {
+        console.log("On collision called");
+        chrome.runtime.sendMessage(SpheroAppID, {message: "On collision"});
+        return true;
+    };
+
+    ext.end_collision = function() {
+        console.log("End collision called");
+        chrome.runtime.sendMessage(SpheroAppID, {message: "End collision"});
+    };
+
+    ext.stop_collision = function() {
+        console.log("Stop collision called");
+        chrome.runtime.sendMessage(SpheroAppID, {message: "Stop collision"});
+    };
+
     // Check the language
     var paramString = window.location.search.replace(/^\?|\/$/g, '');
     var vars = paramString.split("&");
@@ -66,7 +82,11 @@
             ['-'],
             [' ', 'Roll with speed %n in direction %n', 'roll', 60, 0],
             ['w', 'Roll with speed %n in direction %n during %n seconds', 'timed_roll', 60, 0, 1],
-            [' ', 'Stop rolling', 'stop']
+            [' ', 'Stop rolling', 'stop'],
+            ['-'],
+            ['h', 'On collision do', 'on_collision'],
+            [' ', 'End of collision commands', 'end_collision'],
+            [' ', 'Stop collision detection', 'stop_collision']
         ],
     nl: [
             [' ', 'Verander kleur naar %m.colors', 'change_color', 'blauw'],
@@ -74,7 +94,11 @@
             ['-'],
             [' ', 'Rol met snelheid %n in richting %n', 'roll', 60, 0],
             ['w', 'Rol met snelheid %n in richting %n gedurende %n seconden', 'timed_roll', 60, 0, 1],
-            [' ', 'Stop met rollen', 'stop']
+            [' ', 'Stop met rollen', 'stop'],
+            ['-'],
+            ['h', 'Bij botsing doe', 'on_collision'],
+            [' ', 'Einde van botsing commando\'s', 'end_collision'],
+            [' ', 'Stop botsing detectie', 'stop_collision']
         ],
     fr: [
             [' ', 'Change la couleur %m.colors', 'change_color', 'bleu'],
@@ -82,7 +106,11 @@
             ['-'],
             [' ', 'Roule avec vitesse %n dans la direction %n', 'roll', 60, 0],
             ['w', 'Roule avec vitesse %n dans la direction %n pendant %n secondes', 'timed_roll', 60, 0, 1],
-            [' ', 'Arrête avec rouler', 'stop']
+            [' ', 'Arrête avec rouler', 'stop'],
+            ['-'],
+            ['h', 'En cas de collision', 'on_collision'],
+            [' ', 'Fin des commandes de collision', 'end_collision'],
+            [' ', 'Arrête la détection de collision', 'stop_collision']
         ]
     };
 
