@@ -49,18 +49,38 @@
         chrome.runtime.sendMessage(SpheroAppID, {message: "Stop"});
     };
 
-    // Block and block menu descriptions
-    var descriptor = {
-        blocks: [
+    var blocks = {
+    en: [
             [' ', 'Change color to %m.colors', 'change_color', 'blue'],
             [' ', 'Change to a random color', 'random_color'],
+            ['-'],
             [' ', 'Roll with speed %n in direction %n', 'roll', 60, 0],
             ['w', 'Roll with speed %n in direction %n during %n seconds', 'timed_roll', 60, 0, 1],
             [' ', 'Stop rolling', 'stop']
         ],
-        menus: {
+    nl: [
+            [' ', 'Verander kleur naar %m.colors', 'change_color', 'bauw'],
+            [' ', 'Verander naar een willekeurige kleur', 'random_color'],
+            ['-'],
+            [' ', 'Rol met snelheid %n in richting %n', 'roll', 60, 0],
+            ['w', 'Rol met snelheid %n in richting %n gedurende %n seconds', 'timed_roll', 60, 0, 1],
+            [' ', 'Stop met rollen', 'stop']
+        ]
+    };
+
+    var menus = {
+    en: {
             colors: ['blue', 'red', 'green', 'yellow', 'purple', 'pink', 'orange', 'white', 'gold']
         },
+    nl: {
+        colors: ['blauw', 'rood', 'groen', 'geel', 'paars', 'roos', 'oranje', 'wit', 'goud']
+        }
+    };
+
+    // Block and block menu descriptions
+    var descriptor = {
+        blocks: blocks[lang],
+        menus: menus[lang],
         url: 'https://toonr.github.io/Sphero-Blocks/sphero_blocks.js'
     };
 
