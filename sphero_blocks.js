@@ -58,7 +58,6 @@
         if (pair.length > 1 && pair[0]=='lang')
           lang = pair[1];
     }
-    console.log(lang);
 
     var blocks = {
     en: [
@@ -70,12 +69,20 @@
             [' ', 'Stop rolling', 'stop']
         ],
     nl: [
-            [' ', 'Verander kleur naar %m.colors', 'change_color', 'bauw'],
+            [' ', 'Verander kleur naar %m.colors', 'change_color', 'blauw'],
             [' ', 'Verander naar een willekeurige kleur', 'random_color'],
             ['-'],
             [' ', 'Rol met snelheid %n in richting %n', 'roll', 60, 0],
-            ['w', 'Rol met snelheid %n in richting %n gedurende %n seconds', 'timed_roll', 60, 0, 1],
+            ['w', 'Rol met snelheid %n in richting %n gedurende %n seconden', 'timed_roll', 60, 0, 1],
             [' ', 'Stop met rollen', 'stop']
+        ],
+    fr: [
+            [' ', 'Change la couleur %m.colors', 'change_color', 'bleu'],
+            [' ', 'Change la couleur arbitrairement', 'random_color'],
+            ['-'],
+            [' ', 'Roule avec vitesse %n dans la direction %n', 'roll', 60, 0],
+            ['w', 'Roule avec vitesse %n dans la direction %n pendant %n secondes', 'timed_roll', 60, 0, 1],
+            [' ', 'Arrête avec rouler', 'stop']
         ]
     };
 
@@ -85,6 +92,9 @@
         },
     nl: {
         colors: ['blauw', 'rood', 'groen', 'geel', 'paars', 'roos', 'oranje', 'wit', 'goud']
+        },
+    fr: {
+        colors: ['bleu', 'rouge', 'vert', 'jaune', 'violet', 'rose', 'orange', 'blanc', 'or']
         }
     };
 
