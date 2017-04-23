@@ -15,7 +15,7 @@
 
     ext.change_color = function(color) {
         console.log("Change Color called");
-        console.log(lang);
+        console.log(lang === 'en');
         if (lang === 'en') {
             chrome.runtime.sendMessage(SpheroAppID, {message: "Change color", color: color});
         } else {
