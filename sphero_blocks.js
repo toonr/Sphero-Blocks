@@ -3,9 +3,26 @@
     var SpheroStatus = 0;
     var SpheroAppID = "falgapmgoopapgbocigmjlclilgjgijb"; //unique app ID for Sphero Scratch App
 
+    // Check the language
+    var paramString = window.location.search.replace(/^\?|\/$/g, '');
+    var vars = paramString.split("&");
+    var lang = 'en';
+    for (var i=0; i<vars.length; i++) {
+        var pair = vars[i].split('=');
+        if (pair.length > 1 && pair[0]=='lang')
+          lang = pair[1];
+    }
+
     ext.change_color = function(color) {
         console.log("Change Color called");
-        chrome.runtime.sendMessage(SpheroAppID, {message: "Change color", color: color});
+        if (lang === 'en') {
+            chrome.runtime.sendMessage(SpheroAppID, {message: "Change color", color: color});
+        } else {
+            colorIdx = menus[lang].indexOf(color);
+            englishColor = menus['en'][colorIdx];
+            console.log(englishColor);
+            chrome.runtime.sendMessage(SpheroAppID, {message: "Change color", color: englishColor});
+        }
     };
 
     ext.random_color = function() {
@@ -63,16 +80,6 @@
         console.log("Stop collision called");
         chrome.runtime.sendMessage(SpheroAppID, {message: "Stop collision"});
     };
-
-    // Check the language
-    var paramString = window.location.search.replace(/^\?|\/$/g, '');
-    var vars = paramString.split("&");
-    var lang = 'en';
-    for (var i=0; i<vars.length; i++) {
-        var pair = vars[i].split('=');
-        if (pair.length > 1 && pair[0]=='lang')
-          lang = pair[1];
-    }
 
     var blocks = {
     en: [
