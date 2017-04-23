@@ -22,7 +22,7 @@
             //     englishColor = menus['en'][colorIdx];
             console.log("test");
             console.log(menus);
-            console.log(menus[lang]);
+            console.log(menus[lang][colors]);
             chrome.runtime.sendMessage(SpheroAppID, {message: "Change color", color: color});
         }
     };
