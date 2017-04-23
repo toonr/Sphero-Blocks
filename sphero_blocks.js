@@ -1,7 +1,7 @@
 (function(ext) {
     var SpheroConnection = null;
     var SpheroStatus = 0;
-    var SpheroAppID = getRequest().id?getRequest().id:"falgapmgoopapgbocigmjlclilgjgijb"; //unique app ID for Sphero Scratch App
+    var SpheroAppID = "falgapmgoopapgbocigmjlclilgjgijb"; //unique app ID for Sphero Scratch App
 
     ext.change_color = function(color) {
         console.log("Change Color called");
@@ -80,8 +80,8 @@
             [' ', 'Change to a random color', 'random_color'],
             ['-'],
             ['-'],
-            [' ', 'Roll with speed %n in direction %n', 'roll', 60, 0],
-            ['w', 'Roll with speed %n in direction %n during %n seconds', 'timed_roll', 60, 0, 1],
+            [' ', 'Roll with speed %n in direction %n', 'roll', 90, 0],
+            ['w', 'Roll with speed %n in direction %n during %n seconds', 'timed_roll', 90, 0, 1],
             [' ', 'Stop rolling', 'stop'],
             ['-'],
             ['-'],
@@ -94,8 +94,8 @@
             [' ', 'Verander naar een willekeurige kleur', 'random_color'],
             ['-'],
             ['-'],
-            [' ', 'Rol met snelheid %n in richting %n', 'roll', 60, 0],
-            ['w', 'Rol met snelheid %n in richting %n gedurende %n seconden', 'timed_roll', 60, 0, 1],
+            [' ', 'Rol met snelheid %n in richting %n', 'roll', 90, 0],
+            ['w', 'Rol met snelheid %n in richting %n gedurende %n seconden', 'timed_roll', 90, 0, 1],
             [' ', 'Stop met rollen', 'stop'],
             ['-'],
             ['-'],
@@ -107,8 +107,8 @@
             [' ', 'Change la couleur %m.colors', 'change_color', 'bleu'],
             [' ', 'Change la couleur arbitrairement', 'random_color'],
             ['-'],
-            [' ', 'Roule avec vitesse %n dans la direction %n', 'roll', 60, 0],
-            ['w', 'Roule avec vitesse %n dans la direction %n pendant %n secondes', 'timed_roll', 60, 0, 1],
+            [' ', 'Roule avec vitesse %n dans la direction %n', 'roll', 90, 0],
+            ['w', 'Roule avec vitesse %n dans la direction %n pendant %n secondes', 'timed_roll', 90, 0, 1],
             [' ', 'Arrête avec rouler', 'stop'],
             ['-'],
             [' ', 'En cas de collision', 'on_collision'],
