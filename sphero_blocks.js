@@ -20,7 +20,9 @@
         } else {
             var colorIdx = menus[lang].indexOf(color),
                 englishColor = menus['en'][colorIdx];
-            console.log(menus[lang].indexOf(color));
+            console.log("test");
+            console.log(menus);
+            console.log(menus[lang]);
             chrome.runtime.sendMessage(SpheroAppID, {message: "Change color", color: englishColor});
         }
     };
