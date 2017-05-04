@@ -133,11 +133,13 @@
     getSpheroAppStatus();
 
     // Block and block menu descriptions
-    var descriptor = {
+    setTimeout(function(){
+      var descriptor = {
         blocks: blocks[lang],
         menus: menus[lang],
         url: 'https://toonr.github.io/Sphero-Blocks/sphero_blocks.js'
-    };
+        };
+    }, 5000);
    
     ext._getStatus = function() {
         var response = {status: SpheroStatus}
