@@ -145,16 +145,27 @@
                 setTimeout(getSpheroAppStatus, 1000);
             } else if (response.status === false) { //Chrome app says not connected
                 SpheroStatus = 1;
-                lang = response.language;
                 setTimeout(getSpheroAppStatus, 1000);
             } else {// successfully connected
                 if (SpheroStatus !==2) {
                     SpheroConnection = chrome.runtime.connect(SpheroAppID);
                 }
                 SpheroStatus = 2;
-                lang = response.language;
                 setTimeout(getSpheroAppStatus, 1000);
             }
+        });
+    };
+
+    function getSpheroAppLanguage() {
+        chrome.runtime.sendMessage(SpheroAppID, {message: "Language"}, function (response) {
+             if (response === undefined) {
+                lang = 'en'
+             } else {
+                lang = response.language;
+             }
+
+            // Descriptor defined AFTER getting the language, so the right language is set for the blocks.
+            // Default language is English if chrome app can't be found.
             var descriptor = {
                 blocks: blocks[lang],
                 menus: menus[lang],
@@ -164,7 +175,8 @@
             // Register the extension
             ScratchExtensions.register('Sphero SPRK', descriptor, ext);
         });
-    };
+    }
 
     getSpheroAppStatus();
+    getSpheroAppLanguage();
 })({});
