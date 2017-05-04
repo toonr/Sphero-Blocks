@@ -143,13 +143,11 @@
             if (response === undefined) { //Chrome app not found
                 SpheroStatus = 0;
                 setTimeout(getSpheroAppStatus, 1000);
-            }
-            else if (response.status === false) { //Chrome app says not connected
+            } else if (response.status === false) { //Chrome app says not connected
                 SpheroStatus = 1;
                 lang = response.language;
                 setTimeout(getSpheroAppStatus, 1000);
-            }
-            else {// successfully connected
+            } else {// successfully connected
                 if (SpheroStatus !==2) {
                     SpheroConnection = chrome.runtime.connect(SpheroAppID);
                 }
@@ -157,20 +155,16 @@
                 lang = response.language;
                 setTimeout(getSpheroAppStatus, 1000);
             }
+            var descriptor = {
+                blocks: blocks[lang],
+                menus: menus[lang],
+                url: 'https://toonr.github.io/Sphero-Blocks/sphero_blocks.js'
+            };
+
+            // Register the extension
+            ScratchExtensions.register('Sphero SPRK', descriptor, ext);
         });
     };
 
     getSpheroAppStatus();
-
-    // Block and block menu descriptions
-    setTimeout(function(){
-      var descriptor = {
-        blocks: blocks[lang],
-        menus: menus[lang],
-        url: 'https://toonr.github.io/Sphero-Blocks/sphero_blocks.js'
-      };
-
-      // Register the extension
-      ScratchExtensions.register('Sphero SPRK', descriptor, ext);
-    }, 1000);
 })({});
