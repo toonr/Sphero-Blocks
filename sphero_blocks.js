@@ -7,11 +7,6 @@
     var paramString = window.location.search.replace(/^\?|\/$/g, '');
     var vars = paramString.split("&");
     var lang = 'en';
-    for (var i=0; i<vars.length; i++) {
-        var pair = vars[i].split('=');
-        if (pair.length > 1 && pair[0]=='lang')
-          lang = pair[1];
-    }
 
     ext.change_color = function(color) {
         console.log("Change Color called");
@@ -158,6 +153,7 @@
             }
             else if (response.status === false) { //Chrome app says not connected
                 SpheroStatus = 1;
+                lang = response.language;
                 setTimeout(getSpheroAppStatus, 1000);
             }
             else {// successfully connected
@@ -165,6 +161,7 @@
                     SpheroConnection = chrome.runtime.connect(SpheroAppID);
                 }
                 SpheroStatus = 2;
+                lang = response.language;
                 setTimeout(getSpheroAppStatus, 1000);
             }
         });
@@ -173,5 +170,5 @@
     getSpheroAppStatus();
 
     // Register the extension
-    ScratchExtensions.register('Sample extension', descriptor, ext);
+    ScratchExtensions.register('Sphero SPRK', descriptor, ext);
 })({});
