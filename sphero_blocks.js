@@ -130,6 +130,8 @@
         }
     };
 
+    getSpheroAppStatus();
+
     // Block and block menu descriptions
     var descriptor = {
         blocks: blocks[lang],
@@ -154,7 +156,6 @@
             else if (response.status === false) { //Chrome app says not connected
                 SpheroStatus = 1;
                 lang = response.language;
-                console.log(lang);
                 setTimeout(getSpheroAppStatus, 1000);
             }
             else {// successfully connected
@@ -167,8 +168,6 @@
             }
         });
     };
-
-    getSpheroAppStatus();
 
     // Register the extension
     ScratchExtensions.register('Sphero SPRK', descriptor, ext);
