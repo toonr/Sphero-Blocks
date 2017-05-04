@@ -154,6 +154,7 @@
             else if (response.status === false) { //Chrome app says not connected
                 SpheroStatus = 1;
                 lang = response.language;
+                console.log(lang);
                 setTimeout(getSpheroAppStatus, 1000);
             }
             else {// successfully connected
