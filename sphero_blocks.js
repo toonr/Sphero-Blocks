@@ -129,17 +129,6 @@
             colors: ['bleu', 'rouge', 'vert', 'jaune', 'violet', 'rose', 'orange', 'blanc', 'or']
         }
     };
-
-    getSpheroAppStatus();
-
-    // Block and block menu descriptions
-    setTimeout(function(){
-      var descriptor = {
-        blocks: blocks[lang],
-        menus: menus[lang],
-        url: 'https://toonr.github.io/Sphero-Blocks/sphero_blocks.js'
-        };
-    }, 5000);
    
     ext._getStatus = function() {
         var response = {status: SpheroStatus}
@@ -171,6 +160,17 @@
         });
     };
 
-    // Register the extension
-    ScratchExtensions.register('Sphero SPRK', descriptor, ext);
+    getSpheroAppStatus();
+
+    // Block and block menu descriptions
+    setTimeout(function(){
+      var descriptor = {
+        blocks: blocks[lang],
+        menus: menus[lang],
+        url: 'https://toonr.github.io/Sphero-Blocks/sphero_blocks.js'
+      };
+
+      // Register the extension
+      ScratchExtensions.register('Sphero SPRK', descriptor, ext);
+    }, 5000);
 })({});
