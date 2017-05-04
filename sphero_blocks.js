@@ -6,7 +6,7 @@
     // Check the language
     var paramString = window.location.search.replace(/^\?|\/$/g, '');
     var vars = paramString.split("&");
-    var lang = 'en';
+    var lang = null;
 
     ext.change_color = function(color) {
         console.log("Change Color called");
