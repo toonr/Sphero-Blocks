@@ -173,6 +173,7 @@
 
             // Register the extension
             ScratchExtensions.register('Sphero SPRK', descriptor, ext);
+            ScratchExtensions.unregister('Sphero SPRK');
 
             var descriptor = {
                 blocks: blocks['en'],
