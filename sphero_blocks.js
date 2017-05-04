@@ -158,14 +158,13 @@
 
     function getSpheroAppLanguage() {
         chrome.runtime.sendMessage(SpheroAppID, {message: "Language"}, function (response) {
-             if (response === undefined) {
+             if (response === undefined) { // Default language is English if chrome app can't be found.
                 lang = 'en'
              } else {
                 lang = response.language;
              }
 
             // Descriptor defined AFTER getting the language, so the right language is set for the blocks.
-            // Default language is English if chrome app can't be found.
             var descriptor = {
                 blocks: blocks[lang],
                 menus: menus[lang],
@@ -175,7 +174,7 @@
             // Register the extension
             ScratchExtensions.register('Sphero SPRK', descriptor, ext);
         });
-    }
+    };
 
     getSpheroAppStatus();
     getSpheroAppLanguage();
