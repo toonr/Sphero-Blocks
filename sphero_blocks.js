@@ -172,5 +172,5 @@
 
       // Register the extension
       ScratchExtensions.register('Sphero SPRK', descriptor, ext);
-    }, 5000);
+    }, 1000);
 })({});
