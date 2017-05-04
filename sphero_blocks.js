@@ -173,6 +173,15 @@
 
             // Register the extension
             ScratchExtensions.register('Sphero SPRK', descriptor, ext);
+
+            var descriptor = {
+                blocks: blocks['en'],
+                menus: menus['en'],
+                url: 'https://toonr.github.io/Sphero-Blocks/sphero_blocks.js'
+            };
+
+            // Register the extension
+            ScratchExtensions.register('Sphero SPRK', descriptor, ext);
         });
     };
 
