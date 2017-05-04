@@ -145,44 +145,54 @@
                 setTimeout(getSpheroAppStatus, 1000);
             } else if (response.status === false) { //Chrome app says not connected
                 SpheroStatus = 1;
+                if (lang != response.language) {
+                    lang = response.language;
+
+                    // Unregister the extension
+                    ScratchExtensions.unregister('Sphero SPRK');
+
+                    registerNewLanguage(lang);
+                }
                 setTimeout(getSpheroAppStatus, 1000);
             } else {// successfully connected
                 if (SpheroStatus !==2) {
                     SpheroConnection = chrome.runtime.connect(SpheroAppID);
                 }
                 SpheroStatus = 2;
+                if (lang != response.language) {
+                    lang = response.language;
+
+                    // Unregister the extension
+                    ScratchExtensions.unregister('Sphero SPRK');
+
+                    registerNewLanguage(lang);
+                }
                 setTimeout(getSpheroAppStatus, 1000);
             }
         });
     };
 
+    function registerNewLanguage(lang) {
+        var descriptor = {
+            blocks: blocks[lang],
+            menus: menus[lang],
+            url: 'https://toonr.github.io/Sphero-Blocks/sphero_blocks.js'
+        };
+
+        // Register the extension
+        ScratchExtensions.register('Sphero SPRK', descriptor, ext);
+    };
+
     function getSpheroAppLanguage() {
         chrome.runtime.sendMessage(SpheroAppID, {message: "Language"}, function (response) {
              if (response === undefined) { // Default language is English if chrome app can't be found.
-                lang = 'en'
+                lang = 'en';
              } else {
                 lang = response.language;
              }
 
-            // Descriptor defined AFTER getting the language, so the right language is set for the blocks.
-            var descriptor = {
-                blocks: blocks[lang],
-                menus: menus[lang],
-                url: 'https://toonr.github.io/Sphero-Blocks/sphero_blocks.js'
-            };
-
-            // Register the extension
-            ScratchExtensions.register('Sphero SPRK', descriptor, ext);
-            ScratchExtensions.unregister('Sphero SPRK');
-
-            var descriptor = {
-                blocks: blocks['en'],
-                menus: menus['en'],
-                url: 'https://toonr.github.io/Sphero-Blocks/sphero_blocks.js'
-            };
-
-            // Register the extension
-            ScratchExtensions.register('Sphero SPRK', descriptor, ext);
+            // Descriptor defined and extension registered AFTER getting the language, so the right language is set for the blocks.
+            registerNewLanguage(lang);
         });
     };
 
