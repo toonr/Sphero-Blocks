@@ -53,6 +53,16 @@
         chrome.runtime.sendMessage(SpheroAppID, {message: "Roll", speed: speed, direction: check_valid_direction(direction)});
     };
 
+    ext.timed_roll_current_dir = function(speed, time, callback) {
+        console.log("Timed Roll in Current Direction called");
+        if (time > 0) {
+            chrome.runtime.sendMessage(SpheroAppID, {message: "Timed Roll in Current Direction", speed: speed, time: time});
+            window.setTimeout(function() {
+                callback();
+            }, time*1000);
+        }
+    };
+
     ext.timed_roll = function(speed, direction, time, callback) {
         console.log("Timed Roll called");
         if (time > 0) {
@@ -108,6 +118,7 @@
             ['-'],
             [' ', 'Roll with speed %n in current direction', 'roll_current_dir', 90],
             [' ', 'Roll with speed %n in direction %n', 'roll', 90, 0],
+            ['w', 'Roll with speed %n in current direction during %n seconds', 'timed_roll_current_dir', 90, 1],
             ['w', 'Roll with speed %n in direction %n during %n seconds', 'timed_roll', 90, 0, 1],
             [' ', 'Stop rolling', 'stop'],
             [' ', 'Set direction to %n', 'set_direction', 0],
@@ -128,6 +139,7 @@
             ['-'],
             [' ', 'Rol met snelheid %n in de huidige richting', 'roll_current_dir', 90],
             [' ', 'Rol met snelheid %n in richting %n', 'roll', 90, 0],
+            ['w', 'Rol met snelheid %n in de huidige richting gedurende %n seconden', 'timed_roll_current_dir', 90, 1],
             ['w', 'Rol met snelheid %n in richting %n gedurende %n seconden', 'timed_roll', 90, 0, 1],
             [' ', 'Stop met rollen', 'stop'],
             [' ', 'Verander de richting naar %n', 'set_direction', 0],
@@ -148,6 +160,7 @@
             ['-'],
             [' ', 'Roulez avec vitesse %n dans la direction actuelle', 'roll_current_dir', 90],
             [' ', 'Roulez avec vitesse %n dans la direction %n', 'roll', 90, 0],
+            ['w', 'Roulez avec vitesse %n dans la direction actuelle pendant %n secondes', 'timed_roll_current_dir', 90, 1],
             ['w', 'Roulez avec vitesse %n dans la direction %n pendant %n secondes', 'timed_roll', 90, 0, 1],
             [' ', 'Arrêtez avec rouler', 'stop'],
             [' ', 'Changez la direction à %n', 'set_direction', 0],
