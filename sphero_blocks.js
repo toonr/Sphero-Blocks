@@ -1,7 +1,7 @@
 (function(ext) {
     var SpheroConnection = null;
     var SpheroStatus = 0;
-    var SpheroAppID = "falgapmgoopapgbocigmjlclilgjgijb"; //unique app ID for Sphero Scratch App
+    var SpheroAppID = "anccmfbeeidgjaijpaempjioahgdhjlg"; //unique app ID for Sphero Scratch App
 
     // Check the language
     var paramString = window.location.search.replace(/^\?|\/$/g, '');
