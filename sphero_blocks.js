@@ -189,8 +189,8 @@
     ext._getStatus = function() {
         var response = {status: SpheroStatus}
         if (SpheroStatus==0) {response.msg = 'Chrome App not found'}
-        else if (SpheroStatus == 1) {response.msg = 'Not Ready'}
-        else {response.msg = 'Ready'};
+        else if (SpheroStatus == 1) {response.msg = 'Sphero SPRK not connected'}
+        else {response.msg = 'Sphero SPRK connected'};
         return response;
     };
 
