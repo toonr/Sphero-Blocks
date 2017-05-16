@@ -1,12 +1,8 @@
 (function(ext) {
-    var SpheroConnection = null;
-    var SpheroStatus = 0;
-    var SpheroAppID = "anccmfbeeidgjaijpaempjioahgdhjlg"; //unique app ID for Sphero Scratch App
-
-    // Check the language
-    var paramString = window.location.search.replace(/^\?|\/$/g, '');
-    var vars = paramString.split("&");
-    var lang = null;
+    var SpheroConnection = null,
+        SpheroStatus = 0,
+        SpheroAppID = null,
+        lang = null;
 
     check_valid_color_value = function(value) {
         if (value > 255) { return 255; }
@@ -243,6 +239,17 @@
         ScratchExtensions.register('Sphero SPRK', descriptor, ext);
     };
 
+    // Get the app ID
+    function getSpheroAppID() {
+        var parameters = window.location.search.substring(1),
+        vars = parameters.split("&");
+        for (var i=0; i<vars.length; i++) {
+            var pair = vars[i].split('=');
+            if (pair.length > 1 && pair[0]=='appID')
+                SpheroAppID = pair[1];
+        }
+    }
+
     function getSpheroAppLanguage() {
         chrome.runtime.sendMessage(SpheroAppID, {message: "Language"}, function (response) {
              if (response === undefined) { // Default language is English if chrome app can't be found.
@@ -256,6 +263,7 @@
         });
     };
 
-    getSpheroAppStatus();
+    getSpheroAppID();
     getSpheroAppLanguage();
+    getSpheroAppStatus();
 })({});
